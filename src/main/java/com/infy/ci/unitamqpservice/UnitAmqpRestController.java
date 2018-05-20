@@ -58,7 +58,7 @@ public class UnitAmqpRestController {
 	 public UnitAmqpRestController() throws IOException, TimeoutException
 	 {
 		  ConnectionFactory factory = new ConnectionFactory();
-	        factory.setHost("35.154.27.134");
+	        factory.setHost("13.127.34.110");
 
 	        connection = factory.newConnection();
 	        channel = connection.createChannel();
@@ -76,11 +76,12 @@ public class UnitAmqpRestController {
 		
 		buildtype = "nightly";
 		
+		rabbitTemplate.setReplyTimeout(15000);
 		
 		if(build.toLowerCase().equals("latest") && buildtype.equals("nightly")){
 			
 			 String message = String.format("aggregate");
-			 return rabbitTemplate.convertSendAndReceive("myExchange", requestQueueName, message).toString();	 
+			 return rabbitTemplate.convertSendAndReceive("", requestQueueName, message).toString();	 
 //commented today
 			 
 			//commented today		 
