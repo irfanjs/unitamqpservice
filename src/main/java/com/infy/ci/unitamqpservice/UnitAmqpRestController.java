@@ -12,7 +12,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
-import org.springframework.core.env.Environment;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -30,8 +29,7 @@ import com.rabbitmq.client.ConnectionFactory;
 @PropertySource("classpath:/application.properties")
 @RequestMapping("/unittestdata")
 public class UnitAmqpRestController {
-	//private final RabbitTemplate rabbitTemplate;
-	 Environment env;
+	
 	 private String replyQueueName;
 	 
 	 private Connection connection;
@@ -45,76 +43,43 @@ public class UnitAmqpRestController {
 	            return new PropertySourcesPlaceholderConfigurer();
 	    }
 	    
-	    
-	 private Logger logger = LoggerFactory.getLogger(UnitAmqpRestController.class);
+	    private final Logger logger = LoggerFactory.getLogger(UnitAmqpRestController.class);
+	    private final RabbitTemplate rabbitTemplate;
 	 
-	
-//	@Autowired	
-//	  public UnitAmqpRestController(RabbitTemplate rabbitTemplate) {
-//		    this.rabbitTemplate = rabbitTemplate;
-//		  }
-	 
-	 
-	 public UnitAmqpRestController() throws IOException, TimeoutException
-	 {
-		  ConnectionFactory factory = new ConnectionFactory();
-	        factory.setHost("13.127.34.110");
+	    @Autowired
+	    public UnitAmqpRestController(  RabbitTemplate rabbitTemplate) throws IOException, TimeoutException {
+	    	 this.rabbitTemplate = rabbitTemplate;
+	         rabbitTemplate.setReplyTimeout(15_000L);
+	         
+		 ConnectionFactory factory = new ConnectionFactory();
+	        factory.setHost("13.232.79.81");
 
 	        connection = factory.newConnection();
 	        channel = connection.createChannel();
-	 }
-	 
-	  @Autowired
-	    RabbitTemplate rabbitTemplate;
+	 }  
 	 
 	@RequestMapping(value="/{projectid}/ut/aggregate",   
             method = RequestMethod.GET,
             produces = MediaType.TEXT_HTML_VALUE)    
-    public @ResponseBody String getAggregatedDataForSectionOfNightlyBuild (@PathVariable("projectid") int projectid,
-			@RequestParam("buildtype") String buildtype,
-			@RequestParam("build") String build) throws Exception {
-		
-		buildtype = "nightly";
-		
-		rabbitTemplate.setReplyTimeout(15000);
-		
+	  public @ResponseBody String getAggregatedDataForSectionOfNightlyBuild(@PathVariable("projectid") int projectid,
+	            @RequestParam("buildtype") String buildtype, @RequestParam("build") String build) throws Exception {	
 		if(build.toLowerCase().equals("latest") && buildtype.equals("nightly")){
 			
 			 String message = String.format("aggregate");
-			 return rabbitTemplate.convertSendAndReceive("", requestQueueName, message).toString();	 
-//commented today
-			 
-			//commented today		 
-	//		String corrId = UUID.randomUUID().toString();
-	//commented today		
-	
-			 //	        AMQP.BasicProperties props = new AMQP.BasicProperties
-		//                .Builder()
-		  //              .correlationId(corrId)
-		    //            .replyTo(replyQueueName)
-		      //          .build();
+			  logger.info("Sending: " + message);
+			  Object returned = rabbitTemplate.convertSendAndReceive("", requestQueueName, message);
+	            logger.info("Reply: " + returned);
+	            if (returned == null) {
+	                throw new RuntimeException("failed to get a response");
+	            }
+	            return returned.toString();
 
-		//        channel.basicPublish("", requestQueueName, props, message.getBytes("UTF-8"));
-
-		  //      final BlockingQueue<String> response = new ArrayBlockingQueue<String>(1);
-
-		    //    channel.basicConsume(replyQueueName, true, new DefaultConsumer(channel) {
-		      //      @Override
-		       //     public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-		       //         if (properties.getCorrelationId().equals(corrId)) {
-		      //              response.offer(new String(body, "UTF-8"));
-		      //          }
-		     //       }
-		     //   });
-		        
-		        
-		  //     return response.take().toString();
-		    
-		}
+	        }
 		else
 		{
 			return null;
 		}
+		
 		
 	}
 	
