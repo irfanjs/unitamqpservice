@@ -1,19 +1,20 @@
 package com.infy.ci.unitamqpservice;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.util.Properties;
 import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.PropertySource;
-import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -26,7 +27,6 @@ import com.rabbitmq.client.ConnectionFactory;
 
 @Controller
 @Configuration
-@PropertySource("classpath:/application.properties")
 @RequestMapping("/unittestdata")
 public class UnitAmqpRestController {
 	
@@ -35,16 +35,22 @@ public class UnitAmqpRestController {
 	 private Connection connection;
 	    private Channel channel;
 	    private String requestQueueName = "rpc_queue1";
-	    @Value("${spring.rabbitmq.host}")
-	    private String rabHost;
-	    
-	    @Bean
-	    public static PropertySourcesPlaceholderConfigurer propertySourcesPlaceholderConfigurer() {
-	            return new PropertySourcesPlaceholderConfigurer();
-	    }
-	    
+	  
 	    private final Logger logger = LoggerFactory.getLogger(UnitAmqpRestController.class);
 	    private final RabbitTemplate rabbitTemplate;
+	    
+	    public static String getProperty() {
+	    	 Properties properties = new Properties();
+			  try {
+		            File file = ResourceUtils.getFile("classpath:application.properties");
+		            InputStream in = new FileInputStream(file);
+		            properties.load(in);
+		        } catch (IOException e) {
+		           
+		        }
+			return properties.getProperty("spring.rabbitmq.host");
+	    	
+	    }
 	 
 	    @Autowired
 	    public UnitAmqpRestController(  RabbitTemplate rabbitTemplate) throws IOException, TimeoutException {
@@ -52,8 +58,7 @@ public class UnitAmqpRestController {
 	         rabbitTemplate.setReplyTimeout(15_000L);
 	         
 		 ConnectionFactory factory = new ConnectionFactory();
-	        factory.setHost("13.232.79.81");
-
+	        factory.setHost(getProperty());
 	        connection = factory.newConnection();
 	        channel = connection.createChannel();
 	 }  
