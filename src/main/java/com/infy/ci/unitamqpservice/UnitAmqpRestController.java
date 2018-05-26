@@ -70,7 +70,7 @@ public class UnitAmqpRestController {
 	            @RequestParam("buildtype") String buildtype, @RequestParam("build") String build) throws Exception {	
 		if(build.toLowerCase().equals("latest") && buildtype.equals("nightly")){
 			
-			 String message = String.format("aggregate");
+			 String message = String.format("aggregate" + "-" + projectid);
 			  logger.info("Sending: " + message);
 			  Object returned = rabbitTemplate.convertSendAndReceive("", requestQueueName, message);
 	            logger.info("Reply: " + returned);
@@ -83,9 +83,7 @@ public class UnitAmqpRestController {
 		else
 		{
 			return null;
-		}
-		
-		
+		}	
 	}
 	
 	 public void close() throws IOException {
