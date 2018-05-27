@@ -34,7 +34,7 @@ public class UnitAmqpRestController {
 	 
 	 private Connection connection;
 	    private Channel channel;
-	    private String requestQueueName = "rpc_queue1";
+	    private String requestQueueName = "rpc_queue_unit";
 	  
 	    private final Logger logger = LoggerFactory.getLogger(UnitAmqpRestController.class);
 	    private final RabbitTemplate rabbitTemplate;
@@ -67,10 +67,8 @@ public class UnitAmqpRestController {
             method = RequestMethod.GET,
             produces = MediaType.TEXT_HTML_VALUE)    
 	  public @ResponseBody String getAggregatedDataForSectionOfNightlyBuild(@PathVariable("projectid") int projectid,
-	            @RequestParam("buildtype") String buildtype, @RequestParam("build") String build) throws Exception {	
-		if(build.toLowerCase().equals("latest") && buildtype.equals("nightly")){
-			
-			 String message = String.format("aggregate" + "-" + projectid);
+	            @RequestParam("buildtype") String buildtype, @RequestParam("build") String build) throws Exception {
+			 String message = String.format("aggregate" + "-" + projectid + "-" + build);
 			  logger.info("Sending: " + message);
 			  Object returned = rabbitTemplate.convertSendAndReceive("", requestQueueName, message);
 	            logger.info("Reply: " + returned);
@@ -78,12 +76,6 @@ public class UnitAmqpRestController {
 	                throw new RuntimeException("failed to get a response");
 	            }
 	            return returned.toString();
-
-	        }
-		else
-		{
-			return null;
-		}	
 	}
 	
 	 public void close() throws IOException {
