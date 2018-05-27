@@ -68,7 +68,7 @@ public class UnitAmqpRestController {
             produces = MediaType.TEXT_HTML_VALUE)    
 	  public @ResponseBody String getAggregatedDataForSectionOfNightlyBuild(@PathVariable("projectid") int projectid,
 	            @RequestParam("buildtype") String buildtype, @RequestParam("build") String build) throws Exception {
-			 String message = String.format("aggregate" + "-" + projectid + "-" + build);
+			 String message = String.format("aggregate" + "-" + projectid + "-" + build + "-" + buildtype);
 			  logger.info("Sending: " + message);
 			  Object returned = rabbitTemplate.convertSendAndReceive("", requestQueueName, message);
 	            logger.info("Reply: " + returned);
@@ -76,6 +76,23 @@ public class UnitAmqpRestController {
 	                throw new RuntimeException("failed to get a response");
 	            }
 	            return returned.toString();
+	}
+	
+	@RequestMapping(value="/{projectid}/ut/modulewise",   
+            method = RequestMethod.GET,
+            produces = MediaType.TEXT_HTML_VALUE)    
+    public @ResponseBody String getModulewiseDataForSectionOfCiBuild (@PathVariable("projectid") int projectid,
+			@RequestParam("buildtype") String buildtype,
+			@RequestParam("build") String build) throws Exception {
+		
+		 String message = String.format("modulewise" + "-" + projectid + "-" + build + "-" + buildtype);
+		  logger.info("Sending: " + message);
+		  Object returned = rabbitTemplate.convertSendAndReceive("", requestQueueName, message);
+           logger.info("Reply: " + returned);
+           if (returned == null) {
+               throw new RuntimeException("failed to get a response");
+           }
+           return returned.toString();
 	}
 	
 	 public void close() throws IOException {
