@@ -29,73 +29,94 @@ import com.rabbitmq.client.ConnectionFactory;
 @Configuration
 @RequestMapping("/unittestdata")
 public class UnitAmqpRestController {
-	
-	 private String replyQueueName;
-	 
-	 private Connection connection;
-	    private Channel channel;
-	    private String requestQueueName = "rpc_queue_unit";
-	  
-	    private final Logger logger = LoggerFactory.getLogger(UnitAmqpRestController.class);
-	    private final RabbitTemplate rabbitTemplate;
-	    
-	    public static String getProperty() {
-	    	 Properties properties = new Properties();
-			  try {
-		            File file = ResourceUtils.getFile("classpath:application.properties");
-		            InputStream in = new FileInputStream(file);
-		            properties.load(in);
-		        } catch (IOException e) {
-		           
-		        }
-			return properties.getProperty("spring.rabbitmq.host");
-	    	
-	    }
-	 
-	    @Autowired
-	    public UnitAmqpRestController(  RabbitTemplate rabbitTemplate) throws IOException, TimeoutException {
-	    	 this.rabbitTemplate = rabbitTemplate;
-	         rabbitTemplate.setReplyTimeout(15_000L);
-	         
-		 ConnectionFactory factory = new ConnectionFactory();
-	        factory.setHost(getProperty());
-	        connection = factory.newConnection();
-	        channel = connection.createChannel();
-	 }  
-	 
-	@RequestMapping(value="/{projectid}/ut/aggregate",   
-            method = RequestMethod.GET,
-            produces = MediaType.TEXT_HTML_VALUE)    
-	  public @ResponseBody String getAggregatedDataForSectionOfNightlyBuild(@PathVariable("projectid") int projectid,
-	            @RequestParam("buildtype") String buildtype, @RequestParam("build") String build) throws Exception {
-			 String message = String.format("aggregate" + "-" + projectid + "-" + build + "-" + buildtype);
-			  logger.info("Sending: " + message);
-			  Object returned = rabbitTemplate.convertSendAndReceive("", requestQueueName, message);
-	            logger.info("Reply: " + returned);
-	            if (returned == null) {
-	                throw new RuntimeException("failed to get a response");
-	            }
-	            return returned.toString();
+
+	private String replyQueueName;
+
+	private Connection connection;
+	private Channel channel;
+	private String requestQueueName = "rpc_queue_unit";
+
+	private final Logger logger = LoggerFactory.getLogger(UnitAmqpRestController.class);
+	private final RabbitTemplate rabbitTemplate;
+
+	public static String getProperty() {
+		Properties properties = new Properties();
+		try {
+			File file = ResourceUtils.getFile("classpath:application.properties");
+			InputStream in = new FileInputStream(file);
+			properties.load(in);
+		} catch (IOException e) {
+
+		}
+		return properties.getProperty("spring.rabbitmq.host");
+
 	}
-	
-	@RequestMapping(value="/{projectid}/ut/modulewise",   
-            method = RequestMethod.GET,
-            produces = MediaType.TEXT_HTML_VALUE)    
-    public @ResponseBody String getModulewiseDataForSectionOfCiBuild (@PathVariable("projectid") int projectid,
-			@RequestParam("buildtype") String buildtype,
-			@RequestParam("build") String build) throws Exception {
-		
-		 String message = String.format("modulewise" + "-" + projectid + "-" + build + "-" + buildtype);
-		  logger.info("Sending: " + message);
-		  Object returned = rabbitTemplate.convertSendAndReceive("", requestQueueName, message);
-           logger.info("Reply: " + returned);
-           if (returned == null) {
-               throw new RuntimeException("failed to get a response");
-           }
-           return returned.toString();
+
+	@Autowired
+	public UnitAmqpRestController(RabbitTemplate rabbitTemplate) throws IOException, TimeoutException {
+		this.rabbitTemplate = rabbitTemplate;
+		rabbitTemplate.setReplyTimeout(15_000L);
+
+		ConnectionFactory factory = new ConnectionFactory();
+		factory.setHost(getProperty());
+		connection = factory.newConnection();
+		channel = connection.createChannel();
 	}
-	
-	 public void close() throws IOException {
-	        connection.close();
-	    }
+
+	@RequestMapping(value = "/{projectid}/ut/aggregate", method = RequestMethod.GET, produces = MediaType.TEXT_HTML_VALUE)
+	public @ResponseBody String getAggregatedDataForSectionOfNightlyBuild(@PathVariable("projectid") int projectid,
+			@RequestParam("buildtype") String buildtype, @RequestParam("build") String build) throws Exception {
+		String message = String.format("aggregate" + "-" + projectid + "-" + build + "-" + buildtype);
+		logger.info("Sending: " + message);
+		Object returned = rabbitTemplate.convertSendAndReceive("", requestQueueName, message);
+		logger.info("Reply: " + returned);
+		if (returned == null) {
+			throw new RuntimeException("failed to get a response for aggregate");
+		}
+		return returned.toString();
+	}
+
+	@RequestMapping(value = "/{projectid}/ut/modulewise", method = RequestMethod.GET, produces = MediaType.TEXT_HTML_VALUE)
+	public @ResponseBody String getModulewiseDataForSectionOfCiBuild(@PathVariable("projectid") int projectid,
+			@RequestParam("buildtype") String buildtype, @RequestParam("build") String build) throws Exception {
+
+		String message = String.format("modulewise" + "-" + projectid + "-" + build + "-" + buildtype);
+		logger.info("Sending: " + message);
+		Object returned = rabbitTemplate.convertSendAndReceive("", requestQueueName, message);
+		logger.info("Reply: " + returned);
+		if (returned == null) {
+			throw new RuntimeException("failed to get a response for modulewise");
+		}
+		return returned.toString();
+	}
+
+	@RequestMapping(value = "/{projectid}/ut/week", method = RequestMethod.GET, produces = MediaType.TEXT_HTML_VALUE)
+	public @ResponseBody String getWeekDataForSectionBuild(@PathVariable("projectid") int projectid) throws Exception {
+
+		String message = String.format("week" + "-" + projectid);
+		logger.info("Sending: " + message);
+		Object returned = rabbitTemplate.convertSendAndReceive("", requestQueueName, message);
+		logger.info("Reply: " + returned);
+		if (returned == null) {
+			throw new RuntimeException("failed to get a response for week");
+		}
+		return returned.toString();
+	}
+
+	@RequestMapping(value = "/{projectid}/ut/month", method = RequestMethod.GET, produces = MediaType.TEXT_HTML_VALUE)
+	public @ResponseBody String getMonthDataForSectionBuild(@PathVariable("projectid") int projectid) throws Exception {
+
+		String message = String.format("month" + "-" + projectid);
+		logger.info("Sending: " + message);
+		Object returned = rabbitTemplate.convertSendAndReceive("", requestQueueName, message);
+		logger.info("Reply: " + returned);
+		if (returned == null) {
+			throw new RuntimeException("failed to get a response for month");
+		}
+		return returned.toString();
+	}
+
+	public void close() throws IOException {
+		connection.close();
+	}
 }
