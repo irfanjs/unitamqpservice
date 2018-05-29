@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.sql.SQLException;
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
 
@@ -114,6 +115,51 @@ public class UnitAmqpRestController {
 			throw new RuntimeException("failed to get a response for month");
 		}
 		return returned.toString();
+	}
+
+	@RequestMapping(value = "/{projectid}/ut/custom", method = RequestMethod.GET, produces = MediaType.TEXT_HTML_VALUE)
+	public @ResponseBody String getCustomDataForSectionOfNightlyBuild(@PathVariable("projectid") int projectid,
+			@RequestParam("todate") String todate, @RequestParam("fromdate") String fromdate) throws Exception {
+
+		String message = String.format("custom" + "-" + projectid + "-" + todate + "-" + fromdate);
+		logger.info("Sending: " + message);
+		Object returned = rabbitTemplate.convertSendAndReceive("", requestQueueName, message);
+		logger.info("Reply: " + returned);
+		if (returned == null) {
+			throw new RuntimeException("failed to get a response for custom");
+		}
+		return returned.toString();
+	}
+
+	@RequestMapping(value = "/projects", method = RequestMethod.GET, produces = MediaType.TEXT_HTML_VALUE)
+	public @ResponseBody String getProjectDetails() throws ClassNotFoundException, IOException, SQLException {
+
+		int projectid = 1;
+
+		String message = String.format("projects" + "-" + projectid);
+		logger.info("Sending: " + message);
+		Object returned = rabbitTemplate.convertSendAndReceive("", requestQueueName, message);
+		logger.info("Reply: " + returned);
+		if (returned == null) {
+			throw new RuntimeException("failed to get a response for projects");
+		}
+		return returned.toString();
+
+	}
+
+	@RequestMapping(value = "/{projectid}/latestnightlybuilds", method = RequestMethod.GET, produces = MediaType.TEXT_HTML_VALUE)
+	public @ResponseBody String getLatestAvailableNightlyBuilds(@PathVariable("projectid") int projectid)
+			throws Exception {
+
+		String message = String.format("latestnightlybuilds" + "-" + projectid);
+		logger.info("Sending: " + message);
+		Object returned = rabbitTemplate.convertSendAndReceive("", requestQueueName, message);
+		logger.info("Reply: " + returned);
+		if (returned == null) {
+			throw new RuntimeException("failed to get a response for latestnightlybuilds");
+		}
+		return returned.toString();
+
 	}
 
 	public void close() throws IOException {
