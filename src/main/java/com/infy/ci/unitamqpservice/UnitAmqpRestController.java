@@ -162,6 +162,37 @@ public class UnitAmqpRestController {
 
 	}
 
+	@RequestMapping(value = "/daterange", method = RequestMethod.GET, produces = MediaType.TEXT_HTML_VALUE)
+	public @ResponseBody String getdaterange() throws Exception {
+
+		int projectid = 1;
+
+		String message = String.format("daterange" + "-" + projectid);
+		logger.info("Sending: " + message);
+		Object returned = rabbitTemplate.convertSendAndReceive("", requestQueueName, message);
+		logger.info("Reply: " + returned);
+		if (returned == null) {
+			throw new RuntimeException("failed to get a response for daterange");
+		}
+		return returned.toString();
+
+	}
+
+	@RequestMapping(value = "/{projectid}/ut/{buildnumber}", method = RequestMethod.GET, produces = MediaType.TEXT_HTML_VALUE)
+	public @ResponseBody String getbuildnumberwiseinfo(@PathVariable("projectid") int projectid,
+			@PathVariable("buildnumber") int buildnumber) throws Exception {
+
+		String message = String.format("buildnumber" + "-" + projectid + "-" + buildnumber);
+		logger.info("Sending: " + message);
+		Object returned = rabbitTemplate.convertSendAndReceive("", requestQueueName, message);
+		logger.info("Reply: " + returned);
+		if (returned == null) {
+			throw new RuntimeException("failed to get a response for buildnumber");
+		}
+		return returned.toString();
+
+	}
+
 	public void close() throws IOException {
 		connection.close();
 	}
